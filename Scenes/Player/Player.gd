@@ -5,15 +5,16 @@ var vel: Vector2
 export var RUN_ACCEL: float = 100.0
 export var FRICTION: float = 0.9
 export var MAX_RUN_SPEED: float = 500.0
-export var JUMP_FORCE: float = 400.0
-export var GRAV: float = 10.0
+export var JUMP_FORCE: float = 900.0
+export var GRAV: float = 40.0
 const FLOOR_NORMAL: Vector2 = Vector2(0,-1)
 
-onready var anim = $Anim
-onready var floor_ray: RayCast2D = $Detections/Floor
-onready var left_ray = $Detections/Left
-onready var right_ray = $Detections/Right
-onready var line = $Detections/Line2D
+onready var anim: AnimatedSprite = $Anim
+onready var floor_l_ray: RayCast2D = $Detections/Floor_L
+onready var floor_r_ray: RayCast2D = $Detections/Floor_R
+onready var left_ray: RayCast2D = $Detections/Left
+onready var right_ray: RayCast2D = $Detections/Right
+onready var line: Line2D = $Detections/Line2D
 
 var state
 
@@ -26,49 +27,55 @@ enum STATES {
 func _ready():
 	vel = Vector2(0,0)
 	
+	floor_l_ray.add_exception($".")
+	floor_r_ray.add_exception($".")
+	
 	change_state_to("IDLE")
 
 func _physics_process(delta):
+#	for i in line.get_point_count() - 1:
+#		line.remove_point(i)
+#
+#	line.add_point(floor_l_ray.position)
+#	line.add_point(floor_l_ray.position + floor_l_ray.cast_to)
 	
-#	if is_on_floor():
-#		vel.y = 0
+	if is_on_floor() and state != STATES.JUMPING:
+		vel.y = 0
 	
 	set_anim()
 	
-	
 	match state:
 		STATES.IDLE:
-			if Input.is_action_pressed("ui_left") or Input.is_action_pressed("ui_right"):
+			if not is_on_floor():
+				change_state_to("JUMPING")
+			elif Input.is_action_pressed("ui_left") or Input.is_action_pressed("ui_right"):
 				change_state_to("RUNNING")
 			if Input.is_action_pressed("ui_up") and is_on_floor():
-				jump(delta)
+				jump()
 				change_state_to("JUMPING")
-				
 				
 		STATES.RUNNING, STATES.JUMPING:
 			move(delta)
 			
 			match state:
 				STATES.RUNNING:
-					if vel.x == 0 and is_on_floor():
-						change_state_to("IDLE")
-					elif Input.is_action_pressed("ui_up") and is_on_floor():
-						jump(delta)
+					if not is_on_floor():
 						change_state_to("JUMPING")
+					elif Input.is_action_pressed("ui_up") and is_on_floor():
+						jump()
+						change_state_to("JUMPING")
+					elif vel.x == 0:
+						change_state_to("IDLE")
 					
 				STATES.JUMPING:
 					if not is_on_floor():
-						fall(delta)
-			
-			move_and_collide(vel * delta)
-	
-	if not is_on_floor():
-		change_state_to("JUMPING")
-	else:
-		if vel.x == 0:
-			change_state_to("IDLE")
-		else:
-			change_state_to("RUNNING")
+						fall()
+					else:
+						if vel.x == 0:
+							change_state_to("IDLE")
+						else:
+							change_state_to("RUNNING")
+#		
 
 func move(delta: float):
 	var accel = Vector2(0,0)
@@ -83,20 +90,22 @@ func move(delta: float):
 	if accel.x != 0 and (Input.is_action_pressed("ui_left") or Input.is_action_pressed("ui_right")):
 		anim.flip_h = accel.x < 0
 	
-	if abs(vel.x) < 1:
+	if abs(vel.x) <= 1:
 		vel.x = 0
 	
 	vel += accel
 	
 	vel.x = clamp(vel.x, -MAX_RUN_SPEED, MAX_RUN_SPEED)
+	
+	move_and_collide(vel * delta)
 
 func is_on_floor() -> bool:
-	return floor_ray.is_colliding()
+	return floor_l_ray.is_colliding() or floor_r_ray.is_colliding()
 
-func jump(delta: float):
+func jump():
 	vel.y -= JUMP_FORCE
 
-func fall(delta: float):
+func fall():
 	vel.y += GRAV
 	if is_on_floor():
 		vel.y = 0
@@ -106,7 +115,8 @@ func set_anim():
 		STATES.IDLE:
 			anim.play("idle")
 		STATES.RUNNING:
-			anim.play("running")
+			if abs(vel.x) > 1:
+				anim.play("running")
 		STATES.JUMPING:
 			if vel.y < 0:
 				anim.play("jumping")

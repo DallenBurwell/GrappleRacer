@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=2]
+[gd_scene load_steps=16 format=2]
 
 [ext_resource path="res://Scenes/Player/Player.gd" type="Script" id=1]
 [ext_resource path="res://Assets/Player/Idle0.png" type="Texture" id=2]
@@ -12,6 +12,7 @@
 [ext_resource path="res://Assets/Player/Run7.png" type="Texture" id=10]
 [ext_resource path="res://Assets/Player/Jump3.png" type="Texture" id=11]
 [ext_resource path="res://Assets/Player/Jump4.png" type="Texture" id=12]
+[ext_resource path="res://Scenes/GrapplingHook/GrapplingHook.tscn" type="PackedScene" id=13]
 
 [sub_resource type="SpriteFrames" id=1]
 animations = [ {
@@ -58,10 +59,15 @@ drag_margin_v_enabled = false
 [node name="Detections" type="Node2D" parent="."]
 editor/display_folded = true
 
-[node name="Floor" type="RayCast2D" parent="Detections"]
-position = Vector2( 0, 30 )
+[node name="Floor_L" type="RayCast2D" parent="Detections"]
+position = Vector2( -10, 20 )
 enabled = true
-cast_to = Vector2( 0, 1 )
+cast_to = Vector2( 0, 11 )
+
+[node name="Floor_R" type="RayCast2D" parent="Detections"]
+position = Vector2( 10, 20 )
+enabled = true
+cast_to = Vector2( 0, 11 )
 
 [node name="Left" type="RayCast2D" parent="Detections"]
 position = Vector2( -10, 30 )
@@ -75,4 +81,7 @@ cast_to = Vector2( 1, 0 )
 
 [node name="Line2D" type="Line2D" parent="Detections"]
 texture_mode = -204602864
+
+[node name="GrapplingHook" parent="." instance=ExtResource( 13 )]
+exception_path = NodePath("..")
 
