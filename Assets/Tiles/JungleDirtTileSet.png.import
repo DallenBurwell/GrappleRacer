@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/JungleDirtTileSet.png-a6071af0ed7c5c587b24aebd7738c42b.stex"
+path="res://.import/JungleDirtTileSet.png-19cc6681b2dcb84320a8e9a75975c91b.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Terrain/Tiles/JungleDirtTileSet.png"
-dest_files=[ "res://.import/JungleDirtTileSet.png-a6071af0ed7c5c587b24aebd7738c42b.stex" ]
+source_file="res://Assets/Tiles/JungleDirtTileSet.png"
+dest_files=[ "res://.import/JungleDirtTileSet.png-19cc6681b2dcb84320a8e9a75975c91b.stex" ]
 
 [params]
 
