@@ -2,12 +2,14 @@ extends KinematicBody2D
 
 var vel: Vector2
 
-export var RUN_ACCEL: float = 20.0
+export var RUN_ACCEL: float = 100.0
 export var FRICTION: float = 0.99
 export var MAX_RUN_SPEED: float = 500.0
-export var JUMP_FORCE: float = 100.0
+export var JUMP_FORCE: float = 200.0
 export var GRAV: float = 10.0
 const FLOOR_NORMAL: Vector2 = Vector2(0,-1)
+
+onready var anim = $Anim
 
 var state
 
@@ -24,7 +26,9 @@ func _ready():
 func _physics_process(delta):
 	if is_on_floor():
 		vel.y = 0
-	print(is_on_floor())
+	
+	set_anim()
+	
 	match state:
 		STATES.IDLE:
 			if Input.is_action_pressed("ui_left") or Input.is_action_pressed("ui_right"):
@@ -78,3 +82,16 @@ func jump():
 func fall():
 	vel.y += GRAV
 	move_and_slide(vel, FLOOR_NORMAL)
+
+func set_anim():
+	anim.flip_h = vel.x < 0
+	match state:
+		STATES.IDLE:
+			anim.play("idle")
+		STATES.RUNNING:
+			anim.play("running")
+		STATES.JUMPING:
+			if vel.y < 0:
+				anim.play("jumping")
+			else:
+				anim.play("falling")
