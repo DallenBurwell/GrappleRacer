@@ -6,8 +6,8 @@ export var RUN_ACCEL: float = 100.0
 export var FRICTION: float = 0.05
 export var MAX_RUN_SPEED: float = 500.0
 export var JUMP_FORCE: float = 500.0
-export var GRAV: float = 30.0
-export var GRAPPLE_SPEED: float = 100.0
+export var GRAV: float = 15.0
+export var GRAPPLE_SPEED: float = 50.0
 
 onready var anim: AnimatedSprite = $Anim
 
@@ -28,7 +28,9 @@ onready var hook: RayCast2D = $Hook
 #onready var line: Line2D = $Detections/Line2D
 
 var state
-var _delta
+var _delta: float
+
+const FLOOR_NORMAL = Vector2(0,-1)
 
 enum STATES {
 	IDLE,
@@ -66,47 +68,40 @@ func _physics_process(delta):
 	_delta = delta
 	set_anim()
 	
-	if is_on_floor() and state != STATES.JUMPING:
-		vel.y = 0
-	
+	fall()
 	match state:
 		STATES.IDLE:
 			move()
-			if not is_on_floor():
-				change_state_to("JUMPING")
-			elif Input.is_action_pressed("ui_left") or Input.is_action_pressed("ui_right"):
+			if Input.is_action_pressed("ui_left") or Input.is_action_pressed("ui_right"):
 				change_state_to("RUNNING")
 			if Input.is_action_pressed("jump") and is_on_floor():
 				jump()
 				change_state_to("JUMPING")
-			
-			
+		
 		STATES.GRAPPLING:
 			grapple()
 		
-		STATES.RUNNING, STATES.JUMPING:
+		STATES.RUNNING:
 			move()
-			
-			match state:
-				STATES.RUNNING:
-					if not is_on_floor():
-						change_state_to("JUMPING")
-					elif Input.is_action_pressed("jump") and is_on_floor():
-						jump()
-						change_state_to("JUMPING")
-					elif vel.x == 0:
-						change_state_to("IDLE")
-					
-				STATES.JUMPING:
-					if not is_on_floor():
-						fall()
-					else:
-						if vel.x == 0:
-							change_state_to("IDLE")
-						else:
-							change_state_to("RUNNING")
+			if Input.is_action_pressed("jump") and is_on_floor():
+				jump()
+				change_state_to("JUMPING")
+			elif vel.x == 0:
+				change_state_to("IDLE")
+		
+		STATES.JUMPING:
+			move()
+			if is_on_floor():
+				if vel.x == 0:
+					change_state_to("IDLE")
+				else:
+					change_state_to("RUNNING")
+	vel = move_and_slide(vel, FLOOR_NORMAL)
 
 func move():
+	if not is_on_floor() and state != STATES.JUMPING:
+		change_state_to("JUMPING")
+	
 	var accel = Vector2(0,0)
 	
 	if Input.is_action_pressed("ui_left"):
@@ -127,27 +122,22 @@ func move():
 	vel += accel
 	
 	clamp_vel()
-	
-	move_and_collide(vel * _delta)
-	
-	if is_on_ceiling():
-		vel.y = 0
 
-func is_on_floor() -> bool:
-	return floor_l_ray.is_colliding() or floor_r_ray.is_colliding()
+#func is_on_floor() -> bool:
+#	return floor_l_ray.is_colliding() or floor_r_ray.is_colliding()
 
-func is_on_ceiling() -> bool:
-	return ceil_l_ray.is_colliding() or ceil_r_ray.is_colliding()
-
-func is_on_right_wall() -> bool:
-	return right_t_ray.is_colliding() or right_b_ray.is_colliding()
-
-func is_on_left_wall() -> bool:
-	return left_t_ray.is_colliding() or left_b_ray.is_colliding()
+#func is_on_ceiling() -> bool:
+#	return ceil_l_ray.is_colliding() or ceil_r_ray.is_colliding()
+#
+#func is_on_right_wall() -> bool:
+#	return right_t_ray.is_colliding() or right_b_ray.is_colliding()
+#
+#func is_on_left_wall() -> bool:
+#	return left_t_ray.is_colliding() or left_b_ray.is_colliding()
 
 func clamp_vel():
-	var min_x_speed = 0 if is_on_left_wall() else -MAX_RUN_SPEED
-	var max_x_speed = 0 if is_on_right_wall() else MAX_RUN_SPEED
+	var min_x_speed = -MAX_RUN_SPEED #0 if is_on_left_wall() else -MAX_RUN_SPEED
+	var max_x_speed = MAX_RUN_SPEED #0 if is_on_right_wall() else MAX_RUN_SPEED
 	
 	vel.x = clamp(vel.x, min_x_speed, max_x_speed)
 
@@ -156,19 +146,12 @@ func jump():
 
 func fall():
 	vel.y += GRAV
-	if is_on_floor():
-		vel.y = 0
 
 func grapple():
 	var to_hook = hook.hooked_at - global_position
 	vel += to_hook.normalized() * GRAPPLE_SPEED
 	
 	clamp_vel()
-	
-	if is_on_ceiling() or is_on_floor():
-		vel.y = 0
-	
-	move_and_collide(vel * _delta)
 
 func set_anim():
 	match state:
@@ -199,7 +182,7 @@ func _on_Hook_hooked():
 	var to_hook = hook.hooked_at - global_position
 	vel += to_hook.normalized() * GRAPPLE_SPEED
 	
-	move_and_collide(vel * _delta)
+	vel = move_and_slide(vel, FLOOR_NORMAL)
 
 
 func _on_Hook_unhooked():

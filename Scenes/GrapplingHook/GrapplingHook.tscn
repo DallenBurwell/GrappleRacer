@@ -1,8 +1,7 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://Scenes/GrapplingHook/GrapplingHook.gd" type="Script" id=1]
-[ext_resource path="res://Scenes/GrapplingHook/DashedCircle.gd" type="Script" id=2]
-[ext_resource path="res://icon.png" type="Texture" id=3]
+[ext_resource path="res://icon.png" type="Texture" id=2]
 
 [node name="GrapplingHook" type="Node2D"]
 visible = false
@@ -17,11 +16,7 @@ texture_mode = 0
 enabled = true
 cast_to = Vector2( 0, 0 )
 
-[node name="DashedCircle" type="Node2D" parent="."]
-script = ExtResource( 2 )
-LENGTH = 500.0
-
 [node name="Indicator" type="Sprite" parent="."]
 scale = Vector2( 0.5, 0.5 )
-texture = ExtResource( 3 )
+texture = ExtResource( 2 )
 
