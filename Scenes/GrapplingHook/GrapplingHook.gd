@@ -6,7 +6,7 @@ signal unhooked
 onready var line: Line2D = $Line
 onready var direction: RayCast2D = $Direction
 
-export var LENGTH: float = 250.0
+export var LENGTH: float = 500.0
 export var speed: float = 1000
 
 var destination: Vector2
@@ -16,6 +16,9 @@ var hooked: bool = false
 var line_length: float = 0.0
 
 onready var indic = $Indicator
+
+func _ready():
+	show()
 
 func _input(event):
 	if Input.is_action_just_pressed("left_click"):

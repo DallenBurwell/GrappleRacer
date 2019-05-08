@@ -69,6 +69,16 @@ position = Vector2( 10, 20 )
 enabled = true
 cast_to = Vector2( 0, 11 )
 
+[node name="Ceil_L" type="RayCast2D" parent="Detections"]
+position = Vector2( -10, -20 )
+enabled = true
+cast_to = Vector2( 0, -11 )
+
+[node name="Ceil_R" type="RayCast2D" parent="Detections"]
+position = Vector2( 10, -20 )
+enabled = true
+cast_to = Vector2( 0, -11 )
+
 [node name="Left_T" type="RayCast2D" parent="Detections"]
 position = Vector2( -10, -20 )
 enabled = true

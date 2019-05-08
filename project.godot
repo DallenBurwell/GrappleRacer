@@ -21,6 +21,8 @@ config/icon="res://icon.png"
 
 [display]
 
+window/size/width=2048
+window/size/height=1200
 window/size/fullscreen=true
 mouse_cursor/custom_image="res://Assets/Cursor.png"
 mouse_cursor/custom_image_hotspot=Vector2( 0.5, 0.5 )
