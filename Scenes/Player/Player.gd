@@ -3,11 +3,13 @@ extends KinematicBody2D
 var vel: Vector2
 
 export var RUN_ACCEL: float = 100.0
+export var AIR_ACCEL: float = 25.0
 export var FRICTION: float = 0.05
 export var MAX_RUN_SPEED: float = 500.0
+export var MAX_AIR_RUN_SPEED: float = MAX_RUN_SPEED * 2
 export var JUMP_FORCE: float = 500.0
 export var GRAV: float = 15.0
-export var GRAPPLE_SPEED: float = 50.0
+export var GRAPPLE_SPEED: float = 75.0
 
 onready var anim: AnimatedSprite = $Anim
 
@@ -29,6 +31,7 @@ onready var hook: RayCast2D = $Hook
 
 var state
 var _delta: float
+var accel: Vector2
 
 const FLOOR_NORMAL = Vector2(0,-1)
 
@@ -83,6 +86,8 @@ func _physics_process(delta):
 		
 		STATES.RUNNING:
 			move()
+			clamp_vel()
+			
 			if Input.is_action_pressed("jump") and is_on_floor():
 				jump()
 				change_state_to("JUMPING")
@@ -99,17 +104,18 @@ func _physics_process(delta):
 	vel = move_and_slide(vel, FLOOR_NORMAL)
 
 func move():
+	accel = Vector2(0,0)
+	
 	if not is_on_floor() and state != STATES.JUMPING:
 		change_state_to("JUMPING")
 	
-	var accel = Vector2(0,0)
-	
 	if Input.is_action_pressed("ui_left"):
-		accel.x -= RUN_ACCEL
+		accel.x -= RUN_ACCEL if is_on_floor() else AIR_ACCEL
 	if Input.is_action_pressed("ui_right"):
-		accel.x += RUN_ACCEL
-	if accel.x == 0 && abs(vel.x) > 1:
-		accel.x = -FRICTION * vel.x
+		accel.x += RUN_ACCEL if is_on_floor() else AIR_ACCEL
+	
+	if is_on_floor():
+		apply_friction()
 	
 	if vel.x < 0:
 		anim.flip_h = true
@@ -120,8 +126,14 @@ func move():
 		vel.x = 0
 	
 	vel += accel
-	
-	clamp_vel()
+
+func apply_friction():
+#	print("accel.x == 0\t", accel.x == 0)
+#	print("abs(vel.x) > 1\t", abs(vel.x) > 1)
+	print(accel.x)
+	if accel.x == 0 and abs(vel.x) > 1:
+		print("slowing")
+		accel.x = -FRICTION * vel.x
 
 #func is_on_floor() -> bool:
 #	return floor_l_ray.is_colliding() or floor_r_ray.is_colliding()
@@ -136,8 +148,8 @@ func move():
 #	return left_t_ray.is_colliding() or left_b_ray.is_colliding()
 
 func clamp_vel():
-	var min_x_speed = -MAX_RUN_SPEED #0 if is_on_left_wall() else -MAX_RUN_SPEED
-	var max_x_speed = MAX_RUN_SPEED #0 if is_on_right_wall() else MAX_RUN_SPEED
+	var min_x_speed = -MAX_RUN_SPEED
+	var max_x_speed = MAX_RUN_SPEED
 	
 	vel.x = clamp(vel.x, min_x_speed, max_x_speed)
 
@@ -151,7 +163,7 @@ func grapple():
 	var to_hook = hook.hooked_at - global_position
 	vel += to_hook.normalized() * GRAPPLE_SPEED
 	
-	clamp_vel()
+#	clamp_vel()
 
 func set_anim():
 	match state:
