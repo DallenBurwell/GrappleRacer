@@ -5,16 +5,24 @@ var vel: Vector2
 export var RUN_ACCEL: float = 100.0
 export var FRICTION: float = 0.9
 export var MAX_RUN_SPEED: float = 500.0
-export var JUMP_FORCE: float = 900.0
-export var GRAV: float = 40.0
-const FLOOR_NORMAL: Vector2 = Vector2(0,-1)
+export var JUMP_FORCE: float = 500.0
+export var GRAV: float = 30.0
+export var GRAPPLE_SPEED: float = 100.0
 
 onready var anim: AnimatedSprite = $Anim
+
 onready var floor_l_ray: RayCast2D = $Detections/Floor_L
 onready var floor_r_ray: RayCast2D = $Detections/Floor_R
-onready var left_ray: RayCast2D = $Detections/Left
-onready var right_ray: RayCast2D = $Detections/Right
-onready var line: Line2D = $Detections/Line2D
+
+onready var left_t_ray: RayCast2D = $Detections/Left_T
+onready var left_b_ray: RayCast2D = $Detections/Left_B
+
+onready var right_t_ray: RayCast2D = $Detections/Right_T
+onready var right_b_ray: RayCast2D = $Detections/Right_B
+
+onready var hook: RayCast2D = $Hook
+
+#onready var line: Line2D = $Detections/Line2D
 
 var state
 
@@ -22,6 +30,7 @@ enum STATES {
 	IDLE,
 	RUNNING,
 	JUMPING,
+	GRAPPLING
 }
 
 func _ready():
@@ -29,6 +38,14 @@ func _ready():
 	
 	floor_l_ray.add_exception($".")
 	floor_r_ray.add_exception($".")
+	
+	left_t_ray.add_exception($".")
+	left_b_ray.add_exception($".")
+	
+	right_t_ray.add_exception($".")
+	right_b_ray.add_exception($".")
+	
+	hook.add_exception($".")
 	
 	change_state_to("IDLE")
 
@@ -50,10 +67,14 @@ func _physics_process(delta):
 				change_state_to("JUMPING")
 			elif Input.is_action_pressed("ui_left") or Input.is_action_pressed("ui_right"):
 				change_state_to("RUNNING")
-			if Input.is_action_pressed("ui_up") and is_on_floor():
+			if Input.is_action_pressed("jump") and is_on_floor():
 				jump()
 				change_state_to("JUMPING")
-				
+			
+			
+		STATES.GRAPPLING:
+			grapple(delta)
+		
 		STATES.RUNNING, STATES.JUMPING:
 			move(delta)
 			
@@ -61,7 +82,7 @@ func _physics_process(delta):
 				STATES.RUNNING:
 					if not is_on_floor():
 						change_state_to("JUMPING")
-					elif Input.is_action_pressed("ui_up") and is_on_floor():
+					elif Input.is_action_pressed("jump") and is_on_floor():
 						jump()
 						change_state_to("JUMPING")
 					elif vel.x == 0:
@@ -95,12 +116,21 @@ func move(delta: float):
 	
 	vel += accel
 	
-	vel.x = clamp(vel.x, -MAX_RUN_SPEED, MAX_RUN_SPEED)
+	var min_speed = 0 if is_on_left_wall() else -MAX_RUN_SPEED
+	var max_speed = 0 if is_on_right_wall() else MAX_RUN_SPEED
+	
+	vel.x = clamp(vel.x, min_speed, max_speed)
 	
 	move_and_collide(vel * delta)
 
 func is_on_floor() -> bool:
 	return floor_l_ray.is_colliding() or floor_r_ray.is_colliding()
+
+func is_on_right_wall() -> bool:
+	return right_t_ray.is_colliding() or right_b_ray.is_colliding()
+
+func is_on_left_wall() -> bool:
+	return left_t_ray.is_colliding() or left_b_ray.is_colliding()
 
 func jump():
 	vel.y -= JUMP_FORCE
@@ -109,6 +139,10 @@ func fall():
 	vel.y += GRAV
 	if is_on_floor():
 		vel.y = 0
+
+func grapple(delta):
+	vel += (hook.hooked_at - global_position).normalized() * GRAPPLE_SPEED
+	move_and_collide(vel * delta)
 
 func set_anim():
 	match state:
@@ -131,3 +165,12 @@ func change_state_to(to_state: String):
 			state = STATES.RUNNING
 		"JUMPING":
 			state = STATES.JUMPING
+		"GRAPPLING":
+			state = STATES.GRAPPLING
+
+func _on_Hook_hooked():
+	change_state_to("GRAPPLING")
+
+
+func _on_Hook_unhooked():
+	change_state_to("IDLE")
