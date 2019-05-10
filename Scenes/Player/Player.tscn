@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=2]
+[gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://Scenes/Player/Player.gd" type="Script" id=1]
 [ext_resource path="res://Assets/Player/Idle0.png" type="Texture" id=2]
@@ -13,6 +13,7 @@
 [ext_resource path="res://Assets/Player/Jump3.png" type="Texture" id=11]
 [ext_resource path="res://Assets/Player/Jump4.png" type="Texture" id=12]
 [ext_resource path="res://Scenes/GrapplingHook/GrapplingHook.tscn" type="PackedScene" id=13]
+[ext_resource path="res://icon.png" type="Texture" id=14]
 
 [sub_resource type="SpriteFrames" id=1]
 animations = [ {
@@ -39,6 +40,22 @@ animations = [ {
 
 [sub_resource type="CapsuleShape2D" id=2]
 height = 40.0
+
+[sub_resource type="Curve" id=3]
+min_value = -1.0
+_data = [ Vector2( 0.0215029, -0.897066 ), 0.0, 0.0270425, 0, 0, Vector2( 1, 1 ), 0.0, 0.0, 0, 0 ]
+
+[sub_resource type="CurveTexture" id=4]
+curve = SubResource( 3 )
+
+[sub_resource type="ParticlesMaterial" id=5]
+flag_disable_z = true
+gravity = Vector3( 0, 10, 0 )
+orbit_velocity = 0.0
+orbit_velocity_random = 0.17
+scale = 0.1
+hue_variation_random = 0.98
+hue_variation_curve = SubResource( 4 )
 
 [node name="Player" type="KinematicBody2D"]
 script = ExtResource( 1 )
@@ -103,6 +120,14 @@ cast_to = Vector2( 1, 0 )
 texture_mode = -204602864
 
 [node name="Hook" parent="." instance=ExtResource( 13 )]
+
+[node name="Particles2D" type="Particles2D" parent="."]
+emitting = false
+amount = 10
+randomness = 0.23
+local_coords = false
+process_material = SubResource( 5 )
+texture = ExtResource( 14 )
 
 [connection signal="hooked" from="Hook" to="." method="_on_Hook_hooked"]
 [connection signal="unhooked" from="Hook" to="." method="_on_Hook_unhooked"]

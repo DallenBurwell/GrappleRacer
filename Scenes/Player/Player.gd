@@ -101,6 +101,7 @@ func _physics_process(delta):
 					change_state_to("IDLE")
 				else:
 					change_state_to("RUNNING")
+		
 	vel = move_and_slide(vel, FLOOR_NORMAL)
 
 func move():
@@ -109,10 +110,10 @@ func move():
 	if not is_on_floor() and state != STATES.JUMPING:
 		change_state_to("JUMPING")
 	
-	if Input.is_action_pressed("ui_left"):
-		accel.x -= RUN_ACCEL if is_on_floor() else AIR_ACCEL
-	if Input.is_action_pressed("ui_right"):
-		accel.x += RUN_ACCEL if is_on_floor() else AIR_ACCEL
+	if Input.is_action_pressed("ui_left") and vel.x > -MAX_RUN_SPEED:
+		accel.x -= RUN_ACCEL
+	if Input.is_action_pressed("ui_right") and vel.x < MAX_RUN_SPEED:
+		accel.x += RUN_ACCEL
 	
 	if is_on_floor():
 		apply_friction()
@@ -128,11 +129,7 @@ func move():
 	vel += accel
 
 func apply_friction():
-#	print("accel.x == 0\t", accel.x == 0)
-#	print("abs(vel.x) > 1\t", abs(vel.x) > 1)
-	print(accel.x)
 	if accel.x == 0 and abs(vel.x) > 1:
-		print("slowing")
 		accel.x = -FRICTION * vel.x
 
 #func is_on_floor() -> bool:
