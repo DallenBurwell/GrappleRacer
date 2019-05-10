@@ -9,7 +9,7 @@ export var MAX_RUN_SPEED: float = 500.0
 export var MAX_AIR_RUN_SPEED: float = MAX_RUN_SPEED * 2
 export var JUMP_FORCE: float = 500.0
 export var GRAV: float = 15.0
-export var GRAPPLE_SPEED: float = 75.0
+export var GRAPPLE_SPEED: float = -75.0
 
 onready var anim: AnimatedSprite = $Anim
 
@@ -41,6 +41,10 @@ enum STATES {
 	JUMPING,
 	GRAPPLING
 }
+
+func _input(event):
+	if event is InputEventKey and event.scancode == KEY_K:
+		pass
 
 func _ready():
 	vel = Vector2(0,0)
@@ -159,8 +163,6 @@ func fall():
 func grapple():
 	var to_hook = hook.hooked_at - global_position
 	vel += to_hook.normalized() * GRAPPLE_SPEED
-	
-#	clamp_vel()
 
 func set_anim():
 	match state:

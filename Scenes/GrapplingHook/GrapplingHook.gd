@@ -7,13 +7,11 @@ onready var line: Line2D = $Line
 onready var direction: RayCast2D = $Direction
 
 export var LENGTH: float = 500.0
-export var speed: float = 1000
 
 var destination: Vector2
 var hooked_at: Vector2
 
 var hooked: bool = false
-var line_length: float = 0.0
 
 onready var indic = $Indicator
 
@@ -22,7 +20,7 @@ func _ready():
 
 func _input(event):
 	if Input.is_action_just_pressed("left_click"):
-		if in_range():
+		if hookable():
 			hooked = true
 			hooked_at = destination
 			indic.hide()
@@ -32,6 +30,10 @@ func _input(event):
 		if hooked:
 			hooked = false
 			indic.show()
+			
+			for i in line.get_point_count() - 1:
+				line.remove_point(i)
+			
 			emit_signal("unhooked")
 
 func _physics_process(delta):
@@ -39,9 +41,6 @@ func _physics_process(delta):
 	direction.cast_to = direction.cast_to.normalized() * 10000
 	
 	direction.force_raycast_update()
-	
-	for i in line.get_point_count() - 1:
-		line.remove_point(i)
 	
 	destination = direction.get_collision_point()
 	
@@ -55,7 +54,7 @@ func _physics_process(delta):
 	if hooked:
 		for i in line.get_point_count() - 1:
 				line.remove_point(i)
-			
+		
 		line.add_point(Vector2(0,0))
 		line.add_point(hooked_at - global_position)
 
@@ -64,3 +63,13 @@ func add_exception(node: Object):
 
 func in_range() -> bool:
 	return (destination - global_position).length() <= LENGTH
+
+func hookable() -> bool:
+	if in_range():
+		return true
+		
+		
+		var hooked_object = direction.get_collider()
+		if hooked_object and hooked_object.has_method("is_grappable") and hooked_object.is_grappable():
+			return true
+	return false
